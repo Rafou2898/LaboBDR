@@ -37,15 +37,25 @@ ORDER BY country ASC,
 -- END Exercice 03
 
 -- BEGIN Exercice 04
+-- Listez tous les clients actifs (customer_id, prenom, nom) habitant la ville 171, et rattachés au
+-- magasin numéro 1. Triez-les par ordre alphabétique des prénoms.
 SELECT *
 FROM customer
-
-
+WHERE active = TRUE
+    AND address_id IN (SELECT address_id
+                         FROM address
+                         WHERE city_id = 171)
+    AND store_id = 1
+ORDER BY first_name ASC;
 -- END Exercice 04
 
 
 -- BEGIN Exercice 05
+--Donnez le nom et le prénom (prenom_1, nom_1, prenom_2, nom_2) des clients qui ont loué au
+--moins une fois le même film (par exemple, si ALAN et BEN ont loué le film MATRIX, mais pas TRACY,
+--seuls ALAN et BEN doivent être listés).
 -- END Exercice 05
+
 
 
 -- BEGIN Exercice 06

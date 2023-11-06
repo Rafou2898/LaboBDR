@@ -1,25 +1,46 @@
 SET search_path = pagila;
 
 -- BEGIN Exercice 01
-SELECT
-  *
-FROM toto AS T
-WHERE
-  T.name = 'Coucou'
-  AND T.age = 22
-ORDER BY T.date;
+SELECT customer_id,
+       last_name,
+       email
+FROM customer AS C
+WHERE C.first_name = 'PHYLLIS'
+  AND store_id = 1
+ORDER BY C.customer_id DESC;
 -- END Exercice 01
 
 
 -- BEGIN Exercice 02
+SELECT title,
+       release_year
+FROM film as F
+WHERE f.rating = 'R'
+  AND f.length < 60
+  AND replacement_cost = 12.99
+ORDER BY title ASC;
 -- END Exercice 02
 
 
 -- BEGIN Exercice 03
+SELECT address,
+       city,
+       country
+FROM address
+         JOIN city on address.city_id = city.city_id
+         JOIN country c on city.country_id = c.country_id
+WHERE country = 'France'
+   OR c.country_id >= 63 AND c.country_id <= 67
+ORDER BY country ASC,
+         city ASC,
+         postal_code ASC;
 -- END Exercice 03
 
-
 -- BEGIN Exercice 04
+SELECT *
+FROM customer
+
+
 -- END Exercice 04
 
 

@@ -2,9 +2,9 @@ SET search_path = pagila;
 
 
 -- BEGIN Exercice 01
-SELECT customer_id as id_client,
-       last_name   as nom,
-       email       as e_mail
+SELECT customer_id,
+       last_name AS nom,
+       email
 FROM customer AS C
 WHERE C.first_name = 'PHYLLIS'
   AND store_id = 1
@@ -13,9 +13,10 @@ ORDER BY C.customer_id DESC;
 
 
 -- BEGIN Exercice 02
-SELECT title        as titre,
-       release_year as annee_de_sortie
-FROM film as F
+SELECT title        AS titre,
+       release_year AS annee_de_sortie,
+       rating
+FROM film AS F
 WHERE f.rating = 'R'
   AND f.length < 60
   AND replacement_cost = 12.99
@@ -24,12 +25,12 @@ ORDER BY title ASC;
 
 
 -- BEGIN Exercice 03
-SELECT address as adresse,
-       city    as ville,
-       country as pays
+SELECT postal_code,
+       city,
+       country
 FROM address
-         JOIN city on address.city_id = city.city_id
-         JOIN country c on city.country_id = c.country_id
+         JOIN city ON address.city_id = city.city_id
+         JOIN country c ON city.country_id = c.country_id
 WHERE country = 'France'
    OR c.country_id >= 63 AND c.country_id <= 67
 ORDER BY country ASC,
@@ -37,12 +38,14 @@ ORDER BY country ASC,
          postal_code ASC;
 -- END Exercice 03
 
--- BEGIN Exercice 04
 -- Listez tous les clients actifs (customer_id, prenom, nom) habitant la ville 171, et rattachés au
 -- magasin numéro 1. Triez-les par ordre alphabétique des prénoms.
-SELECT customer_id as id_client, first_name as prenom, last_name as nom
+-- BEGIN Exercice 04
+SELECT customer_id,
+       first_name AS prenom,
+       last_name AS nom
 FROM customer
-         JOIN address on customer.address_id = address.address_id
+         JOIN address ON customer.address_id = address.address_id
     AND city_id = 171
 WHERE active = TRUE
   AND store_id = 1
@@ -50,31 +53,31 @@ ORDER BY first_name ASC;
 
 -- END Exercice 04
 
--- BEGIN Exercice 05
+
 -- Donnez le nom et le prénom (prenom_1, nom_1, prenom_2, nom_2) des clients qui ont loué au
 -- moins une fois le même film (par exemple, si ALAN et BEN ont loué le film MATRIX, mais pas TRACY,
 -- seuls ALAN et BEN doivent être listés).
-SELECT c1.first_name AS prenom1,
-       c1.last_name  AS nom1,
-       c2.first_name AS prenom2,
-       c2.last_name  AS nom2
+-- BEGIN Exercice 05
+SELECT c1.first_name AS prenom_1,
+       c1.last_name  AS nom_1,
+       c2.first_name AS prenom_2,
+       c2.last_name  AS nom_2
 
 FROM customer AS c1
-         JOIN rental r1 on c1.customer_id = r1.customer_id
-         JOIN inventory i1 on r1.inventory_id = i1.inventory_id
-         JOIN inventory i2 on i2.film_id = i1.film_id
-         JOIN rental r2 on i2.inventory_id = r2.inventory_id
-         JOIN customer c2 on r2.customer_id = c2.customer_id
+         JOIN rental r1 ON c1.customer_id = r1.customer_id
+         JOIN inventory i1 ON r1.inventory_id = i1.inventory_id
+         JOIN inventory i2 ON i2.film_id = i1.film_id
+         JOIN rental r2 ON i2.inventory_id = r2.inventory_id
+         JOIN customer c2 ON r2.customer_id = c2.customer_id
 WHERE c1.customer_id < c2.customer_id;
 
 -- END Exercice 05
 
 --Donnez le nom et le prénom des acteurs (nom, prenom) ayant joué dans un film d’horreur, dont le
 --prénom commence par K, ou dont le nom de famille commence par D sans utiliser le mot clé JOIN.
--- BEGIN Exercice 06
--- END Exercice 06
 
-SELECT first_name as prenom, last_name as nom
+-- BEGIN Exercice 06
+SELECT first_name AS prenom, last_name AS nom
 FROM actor
 WHERE first_name LIKE 'K%'
    OR last_name LIKE 'D%'
@@ -87,32 +90,65 @@ WHERE first_name LIKE 'K%'
                                                            FROM category
                                                            WHERE name = 'Horror')));
 
-
+-- END Exercice 06
 
 -- Première façon : Utiliser NOT EXISTS
+--BEGIN Exercice 7
 SELECT
     f.film_id,
-    f.title,
-    f.rental_rate/rental_duration as rental_rate_per_day
+    f.title AS titre,
+    f.rental_rate/rental_duration AS prix_de_location_par_jour
 FROM film f
 WHERE f.rental_rate/rental_duration <= 1.00
     AND NOT EXISTS (
-        SELECT 1
+        SELECT *
         FROM rental r
         JOIN inventory i ON r.inventory_id = i.inventory_id
         WHERE i.film_id = f.film_id
-    );
+    )
+ORDER BY rental_rate/rental_duration,
+         film_id;
 
--- BEGIN Exercice 07b
-    -- Deuxième façon : Utiliser LEFT JOIN et vérifier si il n'y a pas de correspondance (NULL)
 SELECT
     f.film_id,
-    f.title,
-    f.rental_rate/rental_duration as rental_rate_per_day
+    f.title AS titre,
+    f.rental_rate/f.rental_duration AS prix_de_location_par_jour
+FROM film f
+LEFT JOIN inventory i ON f.film_id = i.film_id
+LEFT JOIN rental r ON r.rental_id = i.inventory_id
+WHERE f.rental_rate/f.rental_duration <= 1.00 AND r.rental_id IS NULL
+ORDER BY rental_rate/rental_duration,
+         film_id;
+
+
+SELECT
+    f.film_id,
+    f.title AS titre,
+    f.rental_rate/rental_duration AS prix_de_location_par_jour
+FROM film f
+WHERE f.rental_rate/rental_duration <= 1.00
+    AND NOT EXISTS (
+        SELECT *
+        FROM inventory i
+        WHERE i.film_id = f.film_id
+    )
+ORDER BY rental_rate/rental_duration,
+         film_id;
+
+
+-- Deuxième façon : Utiliser LEFT JOIN et vérifier si il n'y a pas de correspondance (NULL)
+-- BEGIN Exercice 07b
+SELECT
+    f.film_id,
+    f.title AS titre,
+    f.rental_rate/rental_duration AS prix_de_location_par_jour
 FROM film f
 LEFT JOIN  inventory i ON f.film_id = i.film_id
 LEFT JOIN rental r ON i.inventory_id = r.inventory_id
-WHERE f.rental_rate/rental_duration <= 1.00 AND r.rental_id IS NULL;
+WHERE f.rental_rate/rental_duration <= 1.00 AND r.rental_id IS NULL
+ORDER BY rental_rate/rental_duration,
+         film_id;
+
 
 -- END Exercice 07b
 
@@ -122,13 +158,13 @@ WHERE f.rental_rate/rental_duration <= 1.00 AND r.rental_id IS NULL;
 -- (b) En utilisant IN (pas de GROUP BY, ni de EXISTS ou NOT EXISTS).
 -- (c) En utilisant aucun des mot-clés précédent (c’est à dire pas de GROUP BY, IN, NOT IN, EXISTS, NOT EXISTS).
 
--- BEGIN Exercice 08a
 -- Reponse différente que la correction de l'assistant mais si on fait le select que sur l'interrieur de la requete,
 -- on remarque que ils sont bien tous en Espagne et qu'ils ont bien des films non rendu... donc normalement ça devrait
 -- être bon
-SELECT customer.customer_id as id_client,
-       customer.last_name   as nom,
-       customer.first_name  as prenom
+-- BEGIN Exercice 08a
+SELECT customer.customer_id AS id,
+       customer.last_name   AS nom,
+       customer.first_name  AS prenom
 FROM customer
 WHERE EXISTS (SELECT *
               FROM address
@@ -142,7 +178,7 @@ ORDER BY customer.last_name ASC;
 -- END Exercice 08a
 
 -- BEGIN Exercice 08b
-SELECT customer.customer_id as id_client, customer.last_name as nom, customer.first_name as prenom
+SELECT customer.customer_id AS id, customer.last_name AS nom, customer.first_name AS prenom
 FROM customer
          JOIN address ON customer.address_id = address.address_id
          JOIN city ON address.city_id = city.city_id
@@ -156,7 +192,7 @@ ORDER BY customer.last_name ASC;
 -- END Exercice 08b
 
 -- BEGIN Exercice 08c
-SELECT customer.customer_id as id_client, customer.last_name as nom, customer.first_name as prenom
+SELECT customer.customer_id AS id, customer.last_name AS nom, customer.first_name AS prenom
 FROM customer
          JOIN address ON customer.address_id = address.address_id
          JOIN city ON address.city_id = city.city_id
@@ -168,8 +204,9 @@ WHERE country.country = 'Spain'
 ORDER BY customer.last_name ASC;
 -- END Exercice 08c
 
+
+-- Sous-requête pour obtenir la liste des films de l'actrice EMILY DEE
 -- BEGIN Exercice 09 (Bonus)
-    -- Sous-requête pour obtenir la liste des films de l'actrice EMILY DEE
 WITH emily_dee_films AS (
     SELECT DISTINCT
         fa.film_id
@@ -180,7 +217,7 @@ WITH emily_dee_films AS (
 
 -- Requête principale pour obtenir les clients ayant loué tous les films d'EMILY DEE
 SELECT
-    c.customer_id,
+    c.customer_id AS id,
     c.first_name AS prenom,
     c.last_name AS nom
 FROM customer c
@@ -197,8 +234,7 @@ HAVING
 -- Donnez le titre des films et le nombre d’acteurs (titre, nb_acteurs) des films dramatiques en les
 -- triant par le nombre d’acteur décroissant. Retenez uniquement les films avec moins de 5 acteurs
 -- BEGIN Exercice 10
-
-SELECT film.title as titre, COUNT(actor.actor_id) AS nombres_acteurs
+SELECT film.title as titre, COUNT(DISTINCT actor.actor_id) AS nombres_acteurs
 FROM film_category
          JOIN category ON category.category_id = film_category.category_id
          JOIN film ON film.film_id = film_category.film_id
@@ -206,7 +242,7 @@ FROM film_category
          JOIN actor ON film_actor.actor_id = actor.actor_id
 WHERE category.name = 'Drama'
 GROUP BY film.film_id, film.title
-HAVING count(actor.actor_id) < 5
+HAVING count(DISTINCT actor.actor_id) < 5
 ORDER BY nombres_acteurs DESC;
 -- END Exercice 10
 
@@ -229,15 +265,15 @@ ORDER BY
 --Affichez le(s) film(s) (id, titre, duree) ayant la durée la moins longue. Si plusieurs films ont la
 --même durée (la moins longue), il faut afficher l’ensemble de ces derniers.
 -- BEGIN Exercice 12
-SELECT film_id as id_film, title as titre, length as longueur
+SELECT film_id as id, title as titre, length as longueur
 FROM film
 WHERE length = (SELECT MIN(length)
                 FROM film);
 -- END Exercice 12
 
 
--- BEGIN Exercice 13a
 -- Sous-requête pour obtenir les acteurs ayant joué dans plus de 40 films
+-- BEGIN Exercice 13a
 WITH prolific_actors AS (
     SELECT
         fa.actor_id
@@ -250,7 +286,7 @@ WITH prolific_actors AS (
 -- Requête principale pour obtenir les films
 SELECT DISTINCT
     f.film_id AS id,
-    f.title
+    f.title AS titre
 FROM film f
 JOIN film_actor fa ON f.film_id = fa.film_id
 WHERE fa.actor_id IN (SELECT actor_id FROM prolific_actors)
@@ -277,7 +313,7 @@ WITH prolific_actors AS (
 -- Requête principale pour obtenir les films
 SELECT
     DISTINCT f.film_id AS id,
-    f.title
+    f.title AS titre
 FROM
     film f
 JOIN
@@ -293,7 +329,7 @@ ORDER BY
 --Etablissez une requête qui donne le nombre de jours (nb_jours) qu’il devra y consacrer sachant
 --qu’il dispose de 8 h par jour.
 -- BEGIN Exercice 14
-SELECT CEIL(SUM(film.length) / 60 / 8) as nombre_de_jours
+SELECT CEIL(SUM(film.length) / CAST(60 AS decimal) / 8) as nombre_de_jours
 FROM film;
 -- END Exercice 14
 
@@ -317,6 +353,7 @@ JOIN city ci ON a.city_id = ci.city_id
 JOIN country co ON ci.country_id = co.country_id
 GROUP BY
     c.customer_id, c.last_name, c.first_name, c.email, co.country;
+--BEGIN sous-requête 15
 SELECT *
 FROM (
     -- Sous-requête pour obtenir tous les clients avec leur dépense moyenne
@@ -425,15 +462,6 @@ VALUES (1,
         true,
         NOW(),
         NOW());
-INSERT INTO customer (store_id, first_name, last_name, email, address_id, active, create_date, last_update)
-VALUES (1,
-        'Rafael',
-        'Dousse',
-        'gr@bluewin.ch',
-        (SELECT address_id FROM address WHERE address = 'Rue du centre'),
-        true,
-        NOW(),
-        NOW());
 
 -- END Exercice 18a
 
@@ -449,8 +477,9 @@ VALUES (1,
 
 -- END Exercice 18c
 
--- BEGIN Exercice 18d
+
 -- Je sais pas si c'est ça qu'on veut?
+-- BEGIN Exercice 18d
 SELECT *
 FROM customer
 WHERE first_name = 'Guillaume'

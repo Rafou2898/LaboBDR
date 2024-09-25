@@ -1,0 +1,3 @@
+Le seul moyen pour que le fichier css fonctionne soit qu'il soit dans le même dossier que le fichier html.
+Normalement avec l ajout deu dossier static et le setup dnas l'App ça devrait trouver mais ça marche jamais.
+Donc c'est pas idéal mais ça marche.
